@@ -13,7 +13,7 @@ A simple custom post type for your testimonials. Add testimonials to any page wi
 
 == Description ==
 
-A simple WordPress plugin that add a Testimonial custom post type to your WordPress website. Added Testimonials with titles, citations, excerpts and content and add them to your website with some easy shortcode
+A simple WordPress plugin that adds a Testimonial custom post type to your WordPress website. Added Testimonials with titles, citations, intros and content and add them to your website with some easy shortcode
 == Installation ==
 
 Use WordPress' Add New Plugin feature, searching "AC testimonial posts", or download the archive and:
@@ -21,7 +21,7 @@ Use WordPress' Add New Plugin feature, searching "AC testimonial posts", or down
 1. Upload the plugin files to the `/wp-content/plugins/ac-testimonial-posts` directory, or install the plugin through the WordPress plugins screen directly.
 2. Activate the plugin through the 'Plugins' screen in WordPress
 3. Add the shortcode [ac_testimonial] to the content area of any page, post or custom post type or to any widget that supports shortcode.
-	4. By default the shortcode will display all your testimonials.
+4. By default the shortcode will display all your testimonials.
 
 
 == Frequently Asked Questions ==
@@ -32,7 +32,7 @@ This plugin is for any one who wants to display customer or client testimonials 
 
 == Screenshots ==
 
-1. Add the code to any content area that accepts shortcode.
+1. Add the short code to any content area that accepts shortcode.
 
 == Upgrade Notice ==
 
