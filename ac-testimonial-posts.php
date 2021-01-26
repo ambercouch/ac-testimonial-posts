@@ -2,12 +2,12 @@
 /*
   Plugin Name: AC Testimonial Posts
   Plugin URI: https://github.com/ambercouch/ac-wp-custom-loop-shortcode
-  Description: A simple custom post type for your testimonials. Add testimonials to any page with some simple shortcode
-  Version: 0.0.1
+  Description: Shortcode  ( [ac_custom_loop] ) that allows you to easily list post, pages or custom posts with the WordPress content editor or in any widget that supports short code. A typical use would be to show your latest post on your homepage.
+  Version: 1.3.0
   Author: AmberCouch
   Author URI: http://ambercouch.co.uk
   Author Email: richard@ambercouch.co.uk
-  Text Domain: ac-testimonial-posts
+  Text Domain: ac-wp-custom-loop-shortcode
   Domain Path: /lang/
   License:
   Copyright 2018 AmberCouch
@@ -36,7 +36,7 @@ define( 'MY_ACF_URL', plugin_dir_url( __FILE__ ) . 'inc/acf/' );
 require_once(  'lib/cpt.php' );
 
 // Include the ACF plugin.
-require_once( MY_ACF_PATH . 'acf.php' );
+//require_once( MY_ACF_PATH . 'acf.php' );
 
 // Include the testimonial custom fields.
 require_once(  'lib/acf.php' );
@@ -44,20 +44,20 @@ require_once(  'lib/acf.php' );
 // Customize the url setting to fix incorrect asset URLs.
 add_filter('acf/settings/url', 'my_acf_settings_url');
 function my_acf_settings_url( $url ) {
-    return MY_ACF_URL;
+   // return MY_ACF_URL;
 }
 
 // (Optional) Hide the ACF admin menu item.
 //add_filter('acf/settings/show_admin', 'my_acf_settings_show_admin');
 function my_acf_settings_show_admin( $show_admin ) {
-    return false;
+    //return false;
 }
 
 // Include the testimonial custom fields.
 require_once(  'inc/cls/ac-wp-custom-loop-sc.php' );
 
 
-function ac_testimonail($atts){
+function ac_testimonials($atts){
 
 
 
@@ -69,7 +69,7 @@ function ac_testimonail($atts){
         'css' => 'true',
         'wrapper' => 'false',
         'ignore_sticky_posts' => 1,
-        'orderby' => 'date',
+        'orderby' => '',
         'order' => 'DESC',
         'class' => 'c-accl-post-list',
         'tax' => '',
@@ -86,14 +86,14 @@ function ac_testimonail($atts){
     $output .= '<div class="l-ac-testimonials">';
     $output .= '<div class="l-ac-testimonials__testimonial-list">';
     $output .= '<ul class="l-ac-testimonial-list__list">';
-    $output .= do_shortcode('[ac_testimonial_custom_loop orderby="'.$orderby.'" show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
+    $output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
     $output .= '</ul>';
     $output .= '</div>';
     $output .= '</div>';
     return $output;
 }
 
-add_shortcode('ac_testimonials', 'ac_testimonail');
+add_shortcode('ac_testimonials', 'ac_testimonials');
 
 
 
