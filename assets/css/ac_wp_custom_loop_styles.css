@@ -12,8 +12,9 @@
     border-bottom: solid 1px ;
     margin-bottom: 36px;
 }
-body .c-ac-testimonial .c-ac-testimonial__header{
-    float:none;
+
+.l-ac-testimonial-list__item{
+    font-size: 1em;
 }
 
 .c-ac-testimonial__intro {
@@ -31,9 +32,6 @@ body .c-ac-testimonial .c-ac-testimonial__header{
     list-style: none;
     margin: 0;
     padding: 0;
-}
-.l-ac-testimonial-list__item{
-    width:100%;
 }
 .c-ac-testimonial__body[data-state=off]{
     height: 0;
