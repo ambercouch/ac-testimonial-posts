@@ -28,10 +28,10 @@
 
 defined('ABSPATH') or die('You do not have the required permissions');
 
-if (!function_exists('ac_wp_testimonial_custom_loop_short_code'))
+if (!function_exists('ac_wp_custom_loop_short_code'))
 {
 
-    function ac_wp_testimonial_custom_loop_short_code($atts)
+    function ac_wp_custom_loop_short_code($atts)
     {
 
 
@@ -159,6 +159,6 @@ if (!function_exists('ac_wp_testimonial_custom_loop_short_code'))
 
     }
 
-    add_shortcode('ac_testimonial_custom_loop', 'ac_wp_testimonial_custom_loop_short_code');
+    add_shortcode('ac_custom_loop', 'ac_wp_custom_loop_short_code');
 
 }
