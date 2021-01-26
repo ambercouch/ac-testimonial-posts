@@ -14,6 +14,7 @@ $the_content = apply_filters('the_content', get_the_content());
 $testimonial_title = (get_field('testimonial_title') != '') ? get_field('testimonial_title') : get_the_title() ;
 $testimonial_intro = get_field('testimonial_intro');
 $testimonial_cite = get_field('testimonial_citation');
+$testimonial_youtube_id = get_field('testimonial_video');
 $tesimonial_id = get_the_ID();
 
 if (! wp_script_is( $handle_js, $list )) {
@@ -40,6 +41,12 @@ if (! wp_script_is( $handle, $list )) {
              <span class="c-ac-testimonial__title"><?php echo $testimonial_title ?></span>
            </h2>
          </header>
+    <?php if ($testimonial_youtube_id) : ?>
+    <div class="c-ac-testimonial__video-wrapper">
+      <iframe class="c-ac-testimonial__video-iframe" width="560" height="315" src="https://www.youtube.com/embed/<?php echo $testimonial_youtube_id ?>" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <?php endif ?>
 
     <?php if ( !empty($the_content) || $testimonial_intro != '' ) : ?>
       <blockquote class="c-ac-testimonial__content">
