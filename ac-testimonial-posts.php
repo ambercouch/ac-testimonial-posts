@@ -57,7 +57,7 @@ function my_acf_settings_show_admin( $show_admin ) {
 require_once(  'inc/cls/ac-wp-custom-loop-sc.php' );
 
 
-function ac_testimonials($atts){
+function ac_testimonail($atts){
 
 
 
@@ -69,7 +69,7 @@ function ac_testimonials($atts){
         'css' => 'true',
         'wrapper' => 'false',
         'ignore_sticky_posts' => 1,
-        'orderby' => 'date',
+        'orderby' => '',
         'order' => 'DESC',
         'class' => 'c-accl-post-list',
         'tax' => '',
@@ -86,14 +86,14 @@ function ac_testimonials($atts){
     $output .= '<div class="l-ac-testimonials">';
     $output .= '<div class="l-ac-testimonials__testimonial-list">';
     $output .= '<ul class="l-ac-testimonial-list__list">';
-    $output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" orderby="'.$orderby.'" ]');
+    $output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
     $output .= '</ul>';
     $output .= '</div>';
     $output .= '</div>';
     return $output;
 }
 
-add_shortcode('ac_testimonials', 'ac_testimonials');
+add_shortcode('ac_testimonials', 'ac_testimonail');
 
 
 

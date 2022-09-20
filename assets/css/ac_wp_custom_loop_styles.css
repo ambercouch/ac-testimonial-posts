@@ -15,7 +15,6 @@
 
 .l-ac-testimonial-list__item{
     font-size: 1em;
-    width: 100%;
 }
 
 .c-ac-testimonial__intro {
@@ -51,9 +50,5 @@
 }
 .c-ac-testimonial__footer{
     text-align: right;
-    margin-bottom: 24px;
-}
-
-.c-ac-testimonial__video-wrapper{
     margin-bottom: 24px;
 }
