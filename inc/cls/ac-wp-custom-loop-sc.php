@@ -3,7 +3,7 @@
   Plugin Name: AC Custom Loop Shortcode
   Plugin URI: https://github.com/ambercouch/ac-wp-custom-loop-shortcode
   Description: Shortcode  ( [ac_custom_loop] ) that allows you to easily list post, pages or custom posts with the WordPress content editor or in any widget that supports short code. A typical use would be to show your latest post on your homepage.
-  Version: 1.3.0
+  Version: 1.5
   Author: AmberCouch
   Author URI: http://ambercouch.co.uk
   Author Email: richard@ambercouch.co.uk
@@ -26,6 +26,8 @@
   Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+use Timber\PostQuery;
+
 defined('ABSPATH') or die('You do not have the required permissions');
 
 if (!function_exists('ac_wp_custom_loop_short_code'))
@@ -39,7 +41,7 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
             'type' => 'post',
             'show' => 4,
             'template_path' => get_stylesheet_directory() . '/',
-            'template' => 'loop-template.php',
+            'template' => 'loop-template',
             'css' => 'true',
             'wrapper' => 'true',
             'ignore_sticky_posts' => 1,
@@ -48,11 +50,12 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
             'class' => 'c-accl-post-list',
             'tax' => '',
             'term' => '',
+            'timber' => false,
             'ids' => ''
 
         ), $atts));
 
-
+        $template_type = $type;
 
         //default orderby
         if ($type == 'post' && $orderby == '')
@@ -68,6 +71,7 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
             $ids = explode(',', $ids);
             $type = 'any';
             $orderby = 'post__in';
+
         }
 
         $args = [
@@ -75,8 +79,22 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
         ];
         $output = '';
         $post_types = get_post_types($args, 'names');
+
         $theme_directory = $template_path;
-        $theme_template = $theme_directory . $template;
+
+
+        if ($timber != false){
+            $twig_template_folder = $theme_directory . 'templates/';
+            $template = (substr($template, -5) === '.twig') ? substr_replace($template ,"",-5) :  $template;
+            $theme_template = $template . '.twig';
+            $theme_template_type = $template . '-' . $template_type . '.twig';
+        }else{
+
+            //$theme_extention = (substr($template, -4) === '.php' || substr($template, -5) === '.twig' ) ? '' : '.php';
+            $template = (substr($template, -4) === '.php') ? substr_replace($template ,"",-4) :  $template;
+            $theme_template = $theme_directory . $template . '.php';
+            $theme_template_type = $theme_directory . $template . '-' . $template_type . '.php';
+        }
 
         $wrapperOpen = ($wrapper == 'true') ? '<div class="'.$class.'" >' : '';
         $wrapperClose = ($wrapper == 'true') ? '</div>' : '';
@@ -93,12 +111,31 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
             }
         }
 
-        if (file_exists($theme_template))
-        {
-            $template = $theme_template;
-        }else{
-            $template = "loop-template.php";
-        }
+if($timber != false){
+
+    if (file_exists($twig_template_folder.$theme_template_type))
+    {
+        $template = $theme_template_type;
+
+    }elseif (file_exists($twig_template_folder.$theme_template ))
+    {
+        $template = $theme_template;
+    }else{
+        $template = "loop-template.twig";
+    }
+}else{
+
+    if (file_exists($theme_template_type))
+    {
+        $template = $theme_template_type;
+
+    }elseif (file_exists( $theme_template ))
+    {
+        $template = $theme_template;
+    }else{
+        $template = "loop-template.php";
+    }
+}
 
         if (!in_array($type, $post_types) && $type != 'any')
         {
@@ -121,8 +158,6 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
             return $output;
         }
 
-
-
         global $wp_query;
         $temp_q = $wp_query;
         $wp_query = null;
@@ -141,16 +176,43 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
 
         if (have_posts()) :
             $output .= $wrapperOpen;
-            while (have_posts()):
-                the_post();
-                ob_start();
-                ?>
-                <?php include("$template"); ?>
-                <?php
-                $output .= ob_get_contents();
-                ob_end_clean();
-            endwhile;
+            if($timber === false){
+
+                while (have_posts()):
+                    the_post();
+                    ob_start();
+                    ?>
+                    <?php include("$template"); ?>
+                    <?php
+                    $output .= ob_get_contents();
+                    ob_end_clean();
+                endwhile;
+
+            }else{
+                if(class_exists('Timber')){
+
+                    $context = Timber::get_context();
+                    $context['posts'] = new Timber\PostQuery();
+                    $templates = array( $template);
+                    ob_start();
+                    Timber::render( $templates, $context );
+                    $output .= ob_get_contents();
+                    ob_end_clean();
+                }else{
+                    ob_start();
+                    ?>
+                        <?php echo "<p>The Timber plugin is not active.<br> Activate Timber or set <code>timber='false'</code> in the short code</p>" ?>
+                    <?php
+                    $output .= ob_get_contents();
+                    ob_end_clean();
+                }
+
+            }
             $output .= $wrapperClose;
+        endif;
+
+        if (have_posts()) :
+
         endif;
 
         $wp_query = $temp_q;

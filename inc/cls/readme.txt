@@ -1,10 +1,10 @@
 === AC Custom Loop Shortcode ===
 Contributors: ambercouch
 Donate link: http://ambercouch.co.uk/
-Tags: shortcode, list post, list custom posts,
+Tags: shortcode, list post, list custom posts, timber, twig, custom post type
 Requires at least: 4.6
-Tested up to: 5.2
-Stable tag: 1.3.0
+Tested up to: 5.7
+Stable tag: 1.5
 Requires PHP: 5.2.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
@@ -30,6 +30,7 @@ Use WordPress' Add New Plugin feature, searching "AC custom loop", or download t
 = Can I use my own template to display the looped posts? =
 
 Yes you can! Simply copy loop-template.php from the plugin folder to the root of your theme folder and edit as needed.
+You can also create a template for each post type such as loop-template-post.php or loop-template-page.php or loop-template-my-custom-post.php
 
 == Screenshots ==
 
@@ -37,11 +38,18 @@ Yes you can! Simply copy loop-template.php from the plugin folder to the root of
 2. Posts, Pages or Custom post types are shown on the front end of your website.
 
 == Upgrade Notice ==
-= 1.3.0 =
-Some small fixes and some extra options to filter the loop post by taxonomy terms
 
-= 1.2.0 =
-Added html wrapper options and updated default order
+= 1.5 =
+Updated Timber support.
+
+= 1.4.3 =
+Fix release issues.
+
+= 1.4.2 =
+Fix template arguments to allow .php to be optional.
+
+= 1.4.0 =
+Updates to templates plus timber support and show posts using ids.
 
 = 1.1.0 =
 Updates to default template and post order.
@@ -54,11 +62,22 @@ Initial version
 
 == Changelog ==
 
-= 1.3.0 (2019-05-15) =
-* Added option to filter the loop by taxonomy term.
+= 1.5 (2021-04-04) =
+* Fix release issues.
 
-= 1.2.0 (2018-10-16) =
-* Added option to remove the html wrapper that is out put by the plugin so you can use <li> tags in your templates.
+= 1.4.3 (2019-12-06) =
+* Fix release issues.
+
+= 1.4.2 (2019-12-24) =
+* Fix shortcode argument issues.
+
+= 1.4.1 (2019-12-06) =
+* Fix release issues.
+
+= 1.4.0 (2019-12-05) =
+* Added ids param to shortcode.
+* Added post type templates.
+* Added Timber template integration
 
 = 1.1.0 (2018-10-16) =
 * Added optional excerpt to the default template.
