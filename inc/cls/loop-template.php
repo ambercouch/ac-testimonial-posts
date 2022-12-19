@@ -6,29 +6,52 @@
  * Time: 13:46
  */
 
+$handle = 'ac_testimonial_styles';
+$handle_js = 'ac_testimonial_script';
+$list = 'enqueued';
 
+$the_content = apply_filters('the_content', get_the_content());
+$testimonial_title = (get_field('testimonial_title') != '') ? get_field('testimonial_title') : get_the_title() ;
+$testimonial_intro = get_field('testimonial_intro');
+$testimonial_body = get_field('testimonial_body');
+$testimonial_cite = get_field('testimonial_citation');
+$tesimonial_id = get_the_ID();
+
+if (! wp_script_is( $handle_js, $list )) {
+    wp_register_script( 'ac_testimonial_script', plugin_dir_url( __FILE__ ) . 'assets/js/ac_testimonial_script.js', array('jquery'), '20200706' );
+    wp_enqueue_script( $handle_js );
+}
+
+if (! wp_script_is( $handle, $list )) {
+    wp_register_style( 'ac_testimonial_styles', plugin_dir_url( __FILE__ ) . 'assets/css/ac_wp_custom_loop_styles.css', array(), '20181007' );
+    wp_enqueue_style( 'ac_testimonial_styles' );
+}
 ?>
-<!-- cls/loop-template.php -->
-<article id="post-<?php the_ID(); ?>" <?php post_class('c-accl-post-list__post-thumb'); ?>>
-  <div class="c-accl-post-thumb">
-    <?php if ( '' !== get_the_post_thumbnail() ) : ?>
-      <div class="post-thumbnail c-accl-post-thumb__feature-image">
-        <a href="<?php the_permalink(); ?>" class="c-accl-post-thumb__feature-image-link" >
-            <?php the_post_thumbnail('post-thumbnail'); ?>
-        </a>
-      </div><!-- .post-thumbnail -->
-    <?php endif; ?>
-         <header  class="entry-header c-accl-post-thumb__header">
-           <h2 class="entry-title c-accl-post-thumb__heading">
-             <a href="<?php esc_url( get_permalink() ) ?>" class="c-accl-post-thumb__link" rel="bookmark">
-               <span class="c-accl-post-thumb__link-title"><?php the_title() ?></span>
-             </a>
-           </h2>
-         </header>
-    <?php if (has_excerpt()) : ?>
-      <div class="c-accl-post-thumb__excerpt"  >
-        <?php the_excerpt() ?>
-      </div>
-    <?php endif; ?>
-  </div>
-</article>
+
+<li class="l-ac-testimonial-list__item" style="list-style:none">
+  <article id="post-<?php the_ID(); ?>" <?php post_class('c-ac-testimonial'); ?>>
+    <div class="c-ac-testimonial__thumb">
+
+
+
+
+          <blockquote class="c-ac-testimonial__content">
+            <div class="c-ac-testimonial__intro">
+                <?php echo $testimonial_intro ?>
+            </div>
+              <?php if ( !empty($testimonial_body) ) : ?>
+                <div class="c-ac-testimonial__body" data-state="off" data-container="testimonial<?php echo $tesimonial_id ?>" >
+                    <?php echo $testimonial_body ?>
+
+                </div>
+              <?php endif ?>
+            <cite class="c-testimonial__cite">
+                <?php echo $testimonial_cite ?>
+            </cite>
+
+          </blockquote>
+
+
+    </div>
+  </article>
+</li>

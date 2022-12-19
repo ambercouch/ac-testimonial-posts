@@ -57,22 +57,22 @@ function my_acf_settings_show_admin( $show_admin ) {
 require_once(  'inc/cls/ac-wp-custom-loop-sc.php' );
 
 
-function ac_testimonail($atts){
+function ac_testimonails($atts){
 
 
 
     extract(shortcode_atts(array(
         'type' => 'ac-testimonial',
-        'show' => -1,
+        'show' => 2,
         'template_path' => get_stylesheet_directory() . '/',
         'template' => plugin_dir_path( __file__ ),
         'css' => 'true',
         'wrapper' => 'false',
         'ignore_sticky_posts' => 1,
-        'orderby' => '',
-        'order' => 'DESC',
+        'orderby' => 'rand',
+        'order' => 'ASC',
         'class' => 'c-accl-post-list',
-        'tax' => '',
+        'tax' => 'ac-testimonial_tag',
         'term' => '',
         'ids' => ''
 
@@ -80,20 +80,22 @@ function ac_testimonail($atts){
 
     $plugin_path = plugin_dir_path( __file__ );
 
-    $wrapper = 'false';
+
 
     $output = '';
     $output .= '<div class="l-ac-testimonials">';
     $output .= '<div class="l-ac-testimonials__testimonial-list">';
     $output .= '<ul class="l-ac-testimonial-list__list">';
-    $output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
+
+    $output .= do_shortcode('[ac_custom_loop tax="ac-testimonial_tag" term="nature" type="ac-testimonial" wrapper="'.$wrapper.'" ids="'.$ids.'" show="'.$show.'" orderby="'.$orderby.'"]');
+    //$output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
     $output .= '</ul>';
     $output .= '</div>';
     $output .= '</div>';
     return $output;
 }
 
-add_shortcode('ac_testimonials', 'ac_testimonail');
+add_shortcode('ac_testimonials', 'ac_testimonails');
 
 
 

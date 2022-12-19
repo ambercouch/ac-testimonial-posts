@@ -46,7 +46,7 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
             'wrapper' => 'true',
             'ignore_sticky_posts' => 1,
             'orderby' => '',
-            'order' => 'DESC',
+            'order' => 'ASC',
             'class' => 'c-accl-post-list',
             'tax' => '',
             'term' => '',
