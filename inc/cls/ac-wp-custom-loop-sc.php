@@ -30,6 +30,20 @@ use Timber\PostQuery;
 
 defined('ABSPATH') or die('You do not have the required permissions');
 
+function ac_cls_query( $ac_cls_new_query = [] ) {
+    static $ac_cls_query;
+    if ( !empty( $ac_cls_new_query ) ) {
+        $ac_cls_query = $ac_cls_new_query;
+    }
+    return $ac_cls_query;
+}
+
+function ac_cls_query_post_id($ac_post){
+    return $ac_post->ID;
+}
+
+
+
 if (!function_exists('ac_wp_custom_loop_short_code'))
 {
 
@@ -162,6 +176,22 @@ if($timber != false){
         $temp_q = $wp_query;
         $wp_query = null;
         $wp_query = new WP_Query();
+
+        //set static var
+        $ac_cls_query = ac_cls_query();
+
+        //empty array for ids
+        $ac_cls_query_post_id = [];
+
+        if (!empty($ac_cls_query)){
+            //map the array
+            $ac_cls_query_post_id = array_map('ac_cls_query_post_id', ac_cls_query());
+            //ac_cls_query($wp_query->posts);
+        }else{
+            echo "ac_cls_query empty";
+        }
+
+
         $wp_query->query(array(
             'post_type' => $type,
             'showposts' => $show,
@@ -170,8 +200,27 @@ if($timber != false){
             'ignore_sticky_posts' => $ignore_sticky_posts,
             'taxonomy' => $tax,
             'term' => $term,
-            'post__in' =>  $ids
+            'post__in' =>  $ids,
+            'post__not_in' => $ac_cls_query_post_id
         ));
+
+        //if var empty
+        if (empty($ac_cls_query)){
+            //set the static array to query posts
+            ac_cls_query($wp_query->posts);
+        }else{
+
+            //if not empty merge the posts with the pervious posts
+            ac_cls_query(array_merge(ac_cls_query(),$wp_query->posts));
+
+        }
+//
+//        var_dump($ac_cls_query_post_id);
+//        var_dump($wp_query);
+
+
+
+
 
 
         if (have_posts()) :
