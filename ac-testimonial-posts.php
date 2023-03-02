@@ -87,7 +87,7 @@ function ac_testimonails($atts){
     $output .= '<div class="l-ac-testimonials__testimonial-list">';
     $output .= '<ul class="l-ac-testimonial-list__list">';
 
-    $output .= do_shortcode('[ac_custom_loop tax="ac-testimonial_tag" term="nature" type="ac-testimonial" wrapper="'.$wrapper.'" ids="'.$ids.'" show="'.$show.'" orderby="'.$orderby.'"]');
+    $output .= do_shortcode('[ac_custom_loop tax="ac-testimonial_tag" term="'.$term.'" type="ac-testimonial" wrapper="'.$wrapper.'" ids="'.$ids.'" show="'.$show.'" orderby="'.$orderby.'"]');
     //$output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
     $output .= '</ul>';
     $output .= '</div>';
