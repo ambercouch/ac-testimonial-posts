@@ -22,13 +22,13 @@ if (! wp_script_is( $handle_js, $list )) {
     wp_enqueue_script( $handle_js );
 }
 
-if (! wp_script_is( $handle, $list )) {
+if (! wp_style_is( $handle, $list )) {
     wp_register_style( 'ac_testimonial_styles', plugin_dir_url( __FILE__ ) . 'assets/css/ac_wp_custom_loop_styles.css', array(), '20181007' );
     wp_enqueue_style( 'ac_testimonial_styles' );
 }
 ?>
 
-<li class="l-ac-testimonial-list__item">
+<li class="l-ac-testimonial-list__item some-ac-test">
 <article id="post-<?php the_ID(); ?>" <?php post_class('c-ac-testimonial'); ?>>
   <div class="c-ac-testimonial__thumb">
 

@@ -17,23 +17,21 @@ $testimonial_body = get_field('testimonial_body');
 $testimonial_cite = get_field('testimonial_citation');
 $tesimonial_id = get_the_ID();
 
-if (! wp_script_is( $handle_js, $list )) {
-    wp_register_script( 'ac_testimonial_script', plugin_dir_url( __FILE__ ) . 'assets/js/ac_testimonial_script.js', array('jquery'), '20200706' );
-    wp_enqueue_script( $handle_js );
-}
+//if (! wp_script_is( $handle_js, $list )) {
+//    wp_register_script( 'ac_testimonial_script', plugin_dir_url( __FILE__ ) . 'assets/js/ac_testimonial_script.js', array('jquery'), '20200706' );
+//    wp_enqueue_script( $handle_js );
+//}
 
-if (! wp_script_is( $handle, $list )) {
-    wp_register_style( 'ac_testimonial_styles', plugin_dir_url( __FILE__ ) . 'assets/css/ac_wp_custom_loop_styles.css', array(), '20181007' );
-    wp_enqueue_style( 'ac_testimonial_styles' );
-}
+//if (! wp_style_is( $handle, $list )) {
+//    wp_register_style( 'ac_testimonial_styles', plugin_dir_url( __FILE__ ) . 'assets/css/ac_wp_custom_loop_styles.css', array(), '20181007' );
+//    wp_enqueue_style( 'ac_testimonial_styles' );
+//}
+
 ?>
 
-<li class="l-ac-testimonial-list__item" style="list-style:none">
+<li class="l-ac-testimonial-list__item some-ac-test" style="list-style:none">
   <article id="post-<?php the_ID(); ?>" <?php post_class('c-ac-testimonial'); ?>>
     <div class="c-ac-testimonial__thumb">
-
-
-
 
           <blockquote class="c-ac-testimonial__content">
             <div class="c-ac-testimonial__intro">

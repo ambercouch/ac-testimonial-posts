@@ -43,6 +43,15 @@ function ac_cls_query_post_id($ac_post){
 }
 
 
+function wpdocs_theme_name_scripts() {
+    $handle = 'ac_wp_custom_loop_styles-ambercouch';
+
+    wp_register_style($handle, plugin_dir_url(__FILE__) . '../../assets/css/ac_wp_custom_loop_styles.css', array(), filemtime(plugin_dir_path(__file__). '../../assets/css/ac_wp_custom_loop_styles.css'));
+    wp_enqueue_style($handle);
+}
+add_action( 'wp_enqueue_scripts', 'wpdocs_theme_name_scripts' );
+
+
 
 if (!function_exists('ac_wp_custom_loop_short_code'))
 {
@@ -115,27 +124,33 @@ if (!function_exists('ac_wp_custom_loop_short_code'))
 
         if ($css == 'true')
         {
-            $handle = 'ac_wp_custom_loop_styles';
-            $list = 'enqueued';
-
-            if (!wp_script_is($handle, $list))
-            {
-                wp_register_style('ac_wp_custom_loop_styles', plugin_dir_url(__FILE__) . 'assets/css/ac_wp_custom_loop_styles.css', array(), '20181016');
-                wp_enqueue_style('ac_wp_custom_loop_styles');
-            }
+//            $handle = 'ac_wp_custom_loop_styles-abc';
+//            $list = 'enqueued';
+//
+//            if (!wp_style_is($handle, $list))
+//            {
+//                wp_register_style($handle, plugin_dir_url(__FILE__) . '../../assets/css/ac_wp_custom_loop_styles.css', array(), filemtime(plugin_dir_path(__file__)   .  '../../assets/css/ac_wp_custom_loop_styles.css'));
+//                wp_enqueue_style($handle);
+//            }
         }
 
-if($timber != false){
+
+
+
+        if($timber != false){
 
     if (file_exists($twig_template_folder.$theme_template_type))
     {
-        $template = $theme_template_type;
+        $template = $twig_template_folder.$theme_template_type;
+
 
     }elseif (file_exists($twig_template_folder.$theme_template ))
     {
-        $template = $theme_template;
+        $template = $twig_template_folder.$theme_template;
+
     }else{
         $template = "loop-template.twig";
+
     }
 }else{
 
@@ -150,6 +165,10 @@ if($timber != false){
         $template = "loop-template.php";
     }
 }
+
+
+
+
 
         if (!in_array($type, $post_types) && $type != 'any')
         {
@@ -188,7 +207,7 @@ if($timber != false){
             $ac_cls_query_post_id = array_map('ac_cls_query_post_id', ac_cls_query());
             //ac_cls_query($wp_query->posts);
         }else{
-            echo "ac_cls_query empty";
+            //echo "ac_cls_query empty";
         }
 
 
@@ -239,9 +258,12 @@ if($timber != false){
 
             }else{
                 if(class_exists('Timber')){
-
                     $context = Timber::get_context();
                     $context['posts'] = new Timber\PostQuery();
+
+                    // Set Timber's template directories
+                    //Timber::$dirname = array( '/home/vagrant/code/wac/public/wp-content/themes/roots-shep/templates/templates', 'some-folder-test' );
+
                     $templates = array( $template);
                     ob_start();
                     Timber::render( $templates, $context );
