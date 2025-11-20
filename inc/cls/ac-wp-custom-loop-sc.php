@@ -1,274 +1,626 @@
 <?php
 /*
   Plugin Name: AC Custom Loop Shortcode
-  Plugin URI: https://github.com/ambercouch/ac-wp-custom-loop-shortcode
+  Plugin URI: https://ambercouch.co.uk
   Description: Shortcode  ( [ac_custom_loop] ) that allows you to easily list post, pages or custom posts with the WordPress content editor or in any widget that supports short code. A typical use would be to show your latest post on your homepage.
-  Version: 1.5
+  Version: 1.7.1
   Author: AmberCouch
   Author URI: http://ambercouch.co.uk
   Author Email: richard@ambercouch.co.uk
-  Text Domain: ac-wp-custom-loop-shortcode
-  Domain Path: /lang/
-  License:
-  Copyright 2018 AmberCouch
-  This program is free software; you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
-  the Free Software Foundation; either version 2 of the License, or
-  (at your option) any later version.
-
-  This program is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-  GNU General Public License for more details.
-
-  You should have received a copy of the GNU General Public License
-  along with this program; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+  Text Domain: ac-custom-loop-shortcode
+  License: GPL-2.0+
+  License URI: http://www.gnu.org/licenses/gpl-2.0.txt
  */
-
-use Timber\PostQuery;
 
 defined('ABSPATH') or die('You do not have the required permissions');
 
-function ac_cls_query( $ac_cls_new_query = [] ) {
-    static $ac_cls_query;
-    if ( !empty( $ac_cls_new_query ) ) {
-        $ac_cls_query = $ac_cls_new_query;
-    }
-    return $ac_cls_query;
-}
-
-function ac_cls_query_post_id($ac_post){
-    return $ac_post->ID;
-}
-
-
-
-if (!function_exists('ac_wp_custom_loop_short_code'))
+/*
+ * Loop setup function
+ */
+if (!function_exists('acclsc_get_template'))
 {
+    function acclsc_get_template($timber, $template_path, $template_type, $template)
+    {
+        $timber_template_dir = '';
+        if ($timber !== false)
+        {
+            $timber_template_dir = is_array(Timber::$dirname) ? Timber::$dirname[0] : Timber::$dirname;
+        }
+        $theme_directory = ($timber !== false) ? $template_path . $timber_template_dir . '/' : $template_path;
 
-    function ac_wp_custom_loop_short_code($atts)
+        $plugin_directory = ($timber !== false) ? plugin_dir_path(__FILE__) . $timber_template_dir . '/' : plugin_dir_path(__FILE__);
+        $file_ext = ($timber !== false) ? '.twig' : '.php';
+        $file_ext_len = strlen($file_ext);
+
+        $template = (substr($template, -$file_ext_len) === $file_ext) ? substr_replace($template, "", -$file_ext_len) : $template;
+        $theme_template = $theme_directory . $template . $file_ext;
+        if (is_array($template_type))
+        {
+            $theme_template_type = $theme_directory . $template . '-' . $template_type[0] . '-' . $template_type[1] . $file_ext;
+            $plugin_template_type = $plugin_directory . $template . '-' . $template_type[0] . '-' . $template_type[1] . $file_ext;
+            $theme_template_tax = $theme_directory . $template . '-tax' . $file_ext;
+            $plugin_template_tax = $plugin_directory . $template . '-tax' . $file_ext;
+        } else
+        {
+            $theme_template_type = $theme_directory . $template . '-' . $template_type . $file_ext;
+            $plugin_template_type = $plugin_directory . $template . '-' . $template_type . $file_ext;
+            $theme_template_tax = '';
+            $plugin_template_tax = '';
+        }
+
+        // Select the appropriate template
+        if (file_exists($theme_template_type))
+        {
+            $selected_template = $theme_template_type;
+        } elseif (file_exists($theme_template_tax))
+        {
+            $selected_template = $theme_template_tax;
+        } elseif (file_exists($theme_template))
+        {
+            $selected_template = $theme_template;
+        } elseif (file_exists($plugin_template_type))
+        {
+            $selected_template = $plugin_template_type;
+        } elseif (file_exists($plugin_template_tax))
+        {
+            $selected_template = $plugin_template_tax;
+        } else
+        {
+            $selected_template = $plugin_directory . "loop-template" . $file_ext;
+
+            // Notify admin user if a custom template is missing
+            if ($template !== 'loop-template' && current_user_can('manage_options'))
+            {
+                $message = sprintf(__('<p><small><b>Admin Message</b><br>The template <b>' . $template . '</b> was passed but the file <b>' . $theme_directory . $template . $file_ext . '</b> could not be found<br>Falling back to the default template.</small></p>', 'acclsc'), esc_html($template));
+                if ($timber !== false)
+                {
+                    //Get relative path
+                    $selected_template = str_replace($theme_directory, '', $selected_template);
+                }
+                return [
+                    'message' => $message,
+                    'template' => $selected_template
+                ];
+            }
+        }
+
+        if ($timber !== false)
+        {
+            //Get relative path
+            $selected_template = str_replace($theme_directory, '', $selected_template);
+        }
+        // Return the template path if no issues
+        return $selected_template;
+    }
+}
+
+if (!function_exists('acclsc_get_orderby')) {
+    function acclsc_get_orderby($ids, $type) {
+
+        if ($ids) {
+            $orderby = 'post__in';
+        } elseif ($type == 'post') {
+            $orderby = 'date';
+        } elseif (strpos($type, ',') !== false) { // Check for multiple post types (comma-separated)
+            $orderby = 'date';
+        } else {
+            $orderby = 'menu_order'; // Use menu_order for a single custom post type
+        }
+
+        return $orderby;
+    }
+}
+
+// Function to validate the post type
+
+if (!function_exists('acclsc_valid_post_type'))
+{
+    function acclsc_valid_post_type($type)
+    {
+        $post_types = get_post_types(array('public' => true), 'names');
+        return in_array($type, $post_types) || $type == 'any' || $type = "tax_term";
+    }
+}
+
+if (!function_exists('acclsc_invalid_post_type_message'))
+{
+// Function to return an error message for invalid post types
+    function acclsc_invalid_post_type_message($type)
+    {
+        $post_types = get_post_types(array('public' => true), 'names');
+        $output = '<p><strong>' . $type . '</strong> ' . __('is not a public post type on this website.') . '</p>';
+        $output .= '<ul>';
+        foreach ($post_types as $cpt)
+        {
+            $output .= '<li>' . $cpt . '</li>';
+        }
+        $output .= '</ul>';
+        $output .= '<p>';
+        $output .= __('Please edit the short code to use one of the available post types.', 'ac-wp-custom-loop-shortcode');
+        $output .= '</p>';
+        $output .= '<code>[ ac_custom_loop type="post" show="4"]</code>';
+        return $output;
+    }
+}
+
+if (!function_exists('acclsc_enqueue_styles'))
+{
+// Function to enqueue CSS
+    function acclsc_enqueue_styles()
+    {
+        $handle = 'ac_wp_custom_loop_styles';
+        if (!wp_script_is($handle, 'enqueued'))
+        {
+
+            $style_path = plugin_dir_path(__FILE__) . 'assets/css/ac_wp_custom_loop_styles.css';
+            $style_version = file_exists($style_path) ? filemtime($style_path) : '1.0';
+
+            wp_register_style('ac_wp_custom_loop_styles', plugin_dir_url(__FILE__) . 'assets/css/ac_wp_custom_loop_styles.css', array(), $style_version);
+
+            wp_enqueue_style('ac_wp_custom_loop_styles');
+        }
+    }
+}
+
+/*
+ * Loop query functions
+ */
+
+if (!function_exists('acclsc_build_query_args'))
+{
+// Function to build WP_Query arguments with support for multiple terms and exclusion terms
+    function acclsc_build_query_args($type, $show, $orderby, $order, $ignore_sticky_posts, $tax, $term, $exclude, $ids, $show_pagination)
     {
 
+        $paged = ($show_pagination) ? (get_query_var('paged')) ? get_query_var('paged') : 1 : 1;
 
+        // Convert `$type` to an array if it contains multiple post types
+        $post_types = explode(',', $type);
+
+        $args = array(
+            'post_type' => (count($post_types) > 1) ? $post_types : $post_types[0],
+            // Use array if multiple types
+            'posts_per_page' => $show,
+            'orderby' => $orderby,
+            'order' => $order,
+            'ignore_sticky_posts' => $ignore_sticky_posts,
+            'paged' => $paged
+        );
+
+        // Initialize the tax_query array
+        $args['tax_query'] = array('relation' => 'AND');
+
+        // Add included terms if `tax` and `term` are provided
+        if (!empty($tax) && !empty($term))
+        {
+            $terms = explode(',', $term); // Split terms by comma
+            $args['tax_query'][] = array(
+                'taxonomy' => $tax,
+                'field' => 'slug',
+                // Use slug to match categories
+                'terms' => $terms,
+                'operator' => 'IN'
+                // Ensures posts match any term in the array
+            );
+        }
+
+        // Add excluded terms if `exclude` is provided
+        if (!empty($tax) && !empty($exclude))
+        {
+            $exclude_terms = explode(',', $exclude); // Split exclude terms by comma
+            $args['tax_query'][] = array(
+                'taxonomy' => $tax,
+                'field' => 'slug',
+                // Use slug to match categories
+                'terms' => $exclude_terms,
+                'operator' => 'NOT IN'
+                // Excludes posts with any of these terms
+            );
+        }
+
+        // Include specific post IDs if provided
+        if (!empty($ids))
+        {
+            $args['post__in'] = $ids;
+        }
+
+        return $args;
+    }
+}
+
+if (!function_exists('acclsc_handle_subtax_query'))
+{
+// Function to handle queries with one or more subtax terms and group by term combinations
+    function acclsc_handle_subtax_query($query_args, $subtaxes, $timber, $template, $wrapper, $class)
+    {
+        $output = '';
+        $subtaxonomies = explode(',', $subtaxes); // Split subtaxonomies by comma
+        $grouped_posts = []; // Initialize grouped posts array
+
+        // Get terms for each subtaxonomy
+        $terms_by_taxonomy = [];
+        foreach ($subtaxonomies as $subtax)
+        {
+            $terms = get_terms(array(
+                'taxonomy' => $subtax,
+                'hide_empty' => true
+            ));
+            if (!empty($terms) && !is_wp_error($terms))
+            {
+                $terms_by_taxonomy[$subtax] = $terms;
+            }
+        }
+
+        // Handle single subtax case
+        if (count($subtaxonomies) == 1)
+        {
+            foreach ($terms_by_taxonomy[$subtaxonomies[0]] as $term)
+            {
+                $subtax_query_args = $query_args;
+                $subtax_query_args['tax_query'][] = array(
+                    'taxonomy' => $subtaxonomies[0],
+                    'field' => 'slug',
+                    'terms' => $term->slug
+                );
+
+                $query = new WP_Query($subtax_query_args);
+
+                if ($query->have_posts())
+                {
+                    $grouped_posts[$term->name] = [];
+                    while ($query->have_posts())
+                    {
+                        $query->the_post();
+                        $grouped_posts[$term->name][] = get_post(get_the_ID());
+                    }
+                }
+                wp_reset_postdata();
+            }
+
+        } else
+        {
+            // Multiple subtaxonomies case with nested grouping
+            foreach ($terms_by_taxonomy[$subtaxonomies[0]] as $term_1)
+            {
+                foreach ($terms_by_taxonomy[$subtaxonomies[1]] as $term_2)
+                {
+                    $subtax_query_args = $query_args;
+                    $subtax_query_args['tax_query'] = array(
+                        'relation' => 'AND',
+                        array(
+                            'taxonomy' => $subtaxonomies[0],
+                            'field' => 'slug',
+                            'terms' => $term_1->slug
+                        ),
+                        array(
+                            'taxonomy' => $subtaxonomies[1],
+                            'field' => 'slug',
+                            'terms' => $term_2->slug
+                        ),
+                        array(
+                            'taxonomy' => $query_args['tax_query'][0]['taxonomy'],
+                            'field' => 'slug',
+                            'terms' => $query_args['tax_query'][0]['terms']
+                        )
+                    );
+
+                    $query = new WP_Query($subtax_query_args);
+
+                    if ($query->have_posts())
+                    {
+                        // Nest posts under [fooTerm][barTerm] structure
+                        if (!isset($grouped_posts[$term_1->name]))
+                        {
+                            $grouped_posts[$term_1->name] = [];
+                        }
+                        $grouped_posts[$term_1->name][$term_2->name] = [];
+
+                        while ($query->have_posts())
+                        {
+                            $query->the_post();
+                            $grouped_posts[$term_1->name][$term_2->name][] = get_post(get_the_ID());
+                        }
+                    }
+                    wp_reset_postdata();
+                }
+            }
+        }
+
+        return $grouped_posts;
+
+    }
+}
+
+if (!function_exists('acclsc_handle_tax_query'))
+{
+// Function to handle the taxonomy query
+    function acclsc_handle_tax_query($tax, $show, $orderby, $order, $template)
+    {
+        $args = array(
+            'taxonomy' => $tax,
+            'number' => intval($show),
+            'orderby' => $orderby ?: 'name',
+            'order' => $order,
+            'hide_empty' => false
+        );
+
+        $terms = get_terms($args);
+
+        if (is_wp_error($terms) || empty($terms))
+        {
+            return '<p><strong>No terms found in taxonomy:</strong> ' . esc_html($tax) . '</p>';
+        }
+
+        return $terms;
+
+
+    }
+}
+
+/*
+ * Loop template functions
+ */
+
+if (!function_exists('acclsc_render_php_template'))
+{
+// Function to render PHP template
+    function acclsc_render_php_template($query, $template)
+    {
+        $output = '';
+        while ($query->have_posts())
+        {
+            $query->the_post();
+            ob_start();
+            include($template);
+            $output .= ob_get_clean();
+        }
+        wp_reset_postdata();
+        return $output;
+    }
+}
+
+if (!function_exists('acclsc_render_timber_template'))
+{
+// Function to render Timber template
+    function acclsc_render_timber_template($query, $template)
+    {
+        $context = Timber::get_context();
+        $context['posts'] = new Timber\PostQuery($query);
+        ob_start();
+        Timber::render($template, $context);
+        return ob_get_clean();
+    }
+}
+
+if (!function_exists('acclsc_render_grouped_php_template'))
+{
+// Function to render grouped posts using PHP template
+    function acclsc_render_grouped_php_template($grouped_posts, $template)
+    {
+
+        $output = '';
+        ob_start();
+        include($template);
+        $output .= ob_get_clean();
+        wp_reset_postdata();
+        return $output;
+    }
+}
+
+if (!function_exists('acclsc_render_grouped_timber_template'))
+{
+// Function to render grouped posts using Timber template
+    function acclsc_render_grouped_timber_template($grouped_posts, $template)
+    {
+        $context = Timber::get_context();
+        $context['grouped_posts'] = $grouped_posts;
+        ob_start();
+        Timber::render($template, $context);
+        return ob_get_clean();
+    }
+}
+
+if (!function_exists('acclsc_render_terms_timber_template'))
+{
+// Function to render the taxonomy terms timber template
+    function acclsc_render_terms_timber_template($term, $template)
+    {
+        $context = Timber::get_context();
+        $context['terms'][] = new \Timber\Term($term->term_id);
+        ob_start();
+        Timber::render($template, $context);
+        return ob_get_clean();
+    }
+}
+
+if (!function_exists('acclsc_render_terms_php_template'))
+{
+// Function to render the taxonomy terms php template
+    function acclsc_render_terms_php_template($term, $template)
+    {
+        $output = '';
+        ob_start();
+        include($template);
+        $output .= ob_get_clean();
+        wp_reset_postdata();
+        return $output;
+    }
+}
+
+
+/*
+ * Custom post loop shortcode function
+ */
+
+if (!function_exists('acclsc_sc')) {
+
+    function acclsc_sc($atts) {
         extract(shortcode_atts(array(
             'type' => 'post',
-            'show' => 4,
+            'collections' => false,
+            'show' => '-1',
             'template_path' => get_stylesheet_directory() . '/',
             'template' => 'loop-template',
             'css' => 'true',
             'wrapper' => 'true',
             'ignore_sticky_posts' => 1,
             'orderby' => '',
-            'order' => 'ASC',
+            'order' => 'DESC',
             'class' => 'c-accl-post-list',
             'tax' => '',
             'term' => '',
+            'subtax' => '', // New subtax parameter
             'timber' => false,
-            'ids' => ''
-
+            'exclude' => '',
+            'ids' => '',
+            'paged' => '',
+            'show_pagination' => false
         ), $atts));
 
+        // Determine if pagination should be shown
+        // If the it is paged show the pagination unless $show_pagination is set to the string false
+        $show_pagination = ($show_pagination === 'false') ? false : $paged;
+
+        // Validate post type
+        if (!acclsc_valid_post_type($type)) {
+            return acclsc_invalid_post_type_message($type);
+        }
+
+        // Check if Timber is requested and available
+        if ($timber !== false) {
+            if (!class_exists('Timber')) {
+                return '<p><strong>Timber plugin is not active.</strong> Please install and activate the Timber plugin to use Twig templates with this shortcode.</p>';
+            } else {
+                $timber = true;
+            }
+        }
+
+        // init the output var
+        $output = '';
+
+        //set the template type
         $template_type = $type;
 
-        //default orderby
-        if ($type == 'post' && $orderby == '')
-        {
-            $orderby = 'date';
-        }
-        elseif($orderby == '')
-        {
-            $orderby = 'menu_order';
+        // Determine if we are taxonomy terms instead of posts
+        if ($collections != false || $type == 'tax_term' ) {
+            if (empty($tax)) {
+                return '<p><strong>Error:</strong> You must specify a taxonomy using the "tax" attribute when using "type=\'tax_term\'".</p>';
+            }
+
+            //update the template type
+            $template_type = ['tax',$tax];
+
+            //update the $show var when querying taxonomy terms
+            //if we want all terms we need to use 0 instead of -1
+            $show = ($show == '-1') ? 0 : $show;
         }
 
-        if($ids != ''){
+        // Determine if we are getting specific IDs
+        if ($ids != '') {
             $ids = explode(',', $ids);
             $type = 'any';
-            $orderby = 'post__in';
-
         }
 
-        $args = [
-            'public' => true
-        ];
-        $output = '';
-        $post_types = get_post_types($args, 'names');
+        // Get the template path
+        $template = acclsc_get_template($timber, $template_path, $template_type, $template);
 
-        $theme_directory = $template_path;
+        error_log('template');
+        error_log(print_r($template, true));
 
 
-        if ($timber != false){
-            $twig_template_folder = $theme_directory . 'templates/';
-            $template = (substr($template, -5) === '.twig') ? substr_replace($template ,"",-5) :  $template;
-            $theme_template = $template . '.twig';
-            $theme_template_type = $template . '-' . $template_type . '.twig';
-        }else{
-
-            //$theme_extention = (substr($template, -4) === '.php' || substr($template, -5) === '.twig' ) ? '' : '.php';
-            $template = (substr($template, -4) === '.php') ? substr_replace($template ,"",-4) :  $template;
-            $theme_template = $theme_directory . $template . '.php';
-            $theme_template_type = $theme_directory . $template . '-' . $template_type . '.php';
+        // Check if the template exists
+        if (is_array($template)) {
+            $output .= $template['message'];
+            $template = $template['template'];
         }
 
-        $wrapperOpen = ($wrapper == 'true') ? '<div class="'.$class.'" >' : '';
-        $wrapperClose = ($wrapper == 'true') ? '</div>' : '';
+        // Get the correct orderby
+        $orderby = ($orderby) ? $orderby : acclsc_get_orderby($ids, $type);
 
-        if ($css == 'true')
+        // Enqueue CSS if required
+        if ($css == 'true') {
+            acclsc_enqueue_styles();
+        }
+
+        if ($wrapper == 'true')
         {
-            $handle = 'ac_wp_custom_loop_styles';
-            $list = 'enqueued';
-
-            if (!wp_script_is($handle, $list))
-            {
-                wp_register_style('ac_wp_custom_loop_styles', plugin_dir_url(__FILE__) . 'assets/css/ac_wp_custom_loop_styles.css', array(), '20181016');
-                wp_enqueue_style('ac_wp_custom_loop_styles');
-            }
+            $output .= '<div class="' . esc_attr($class) . '">';
         }
 
-if($timber != false){
-
-    if (file_exists($twig_template_folder.$theme_template_type))
-    {
-        $template = $twig_template_folder.$theme_template_type;
-
-    }elseif (file_exists($twig_template_folder.$theme_template ))
-    {
-        $template = $twig_template_folder.$theme_template;
-    }else{
-        $template = "loop-template.twig";
-    }
-}else{
-
-    if (file_exists($theme_template_type))
-    {
-        $template = $theme_template_type;
-
-    }elseif (file_exists( $theme_template ))
-    {
-        $template = $theme_template;
-    }else{
-        $template = "loop-template.php";
-    }
-}
-
-        if (!in_array($type, $post_types) && $type != 'any')
+        // Determine if we are getting taxonomy terms, a simple list of post, or post grouped by taxonomy terms.
+        if ($collections != false || $type == 'tax_term' )
         {
-            $output .= '<p>';
-            $output .= '<strong>' . $type . '</strong> ';
-            $output .= __('is not a public post type on this website. The following post type are available: -', 'ac-wp-custom-loop-shortcode');
-            $output .= '</p>';
-            $output .= '<ul>';
+            $terms = acclsc_handle_tax_query($tax, $show, $orderby, $order, $template);
 
-            foreach ($post_types as $key => $cpt)
+            if (!empty($terms))
             {
-                $output .= '<li>' . $cpt . '</li>';
+                if ($timber && class_exists('Timber'))
+                {
+
+                    foreach ($terms as $term){
+                        $output .= acclsc_render_terms_timber_template($term, $template);
+                    }
+                } else
+                {
+                    foreach ($terms as $term){
+                        $output .= acclsc_render_terms_php_template($term, $template);                    }
+                }
             }
-            $output .= '</ul>';
-            $output .= '<p>';
-            $output .= __('Please edit the short code to use one of the available post types.', 'ac-wp-custom-loop-shortcode');
-            $output .= '</p>';
-            $output .= '<code>[ ac_custom_loop type="post" show="4"]</code>';
 
-            return $output;
-        }
+        } elseif (empty($subtax)) {
 
-        global $wp_query;
-        $temp_q = $wp_query;
-        $wp_query = null;
-        $wp_query = new WP_Query();
+            // Main Query Arguments
+            $query_args = acclsc_build_query_args($type, $show, $orderby, $order, $ignore_sticky_posts, $tax, $term, $exclude, $ids, $show_pagination);
 
-        //set static var
-        $ac_cls_query = ac_cls_query();
+            // Execute the query
+            $query = new WP_Query($query_args);
 
-        //empty array for ids
-        $ac_cls_query_post_id = [];
-
-        if (!empty($ac_cls_query)){
-            //map the array
-            $ac_cls_query_post_id = array_map('ac_cls_query_post_id', ac_cls_query());
-            //ac_cls_query($wp_query->posts);
-        }else{
-            //echo "ac_cls_query empty";
-        }
-
-        $wp_query->query(array(
-            'post_type' => $type,
-            'showposts' => $show,
-            'orderby' => $orderby,
-            'order' => $order,
-            'ignore_sticky_posts' => $ignore_sticky_posts,
-            'taxonomy' => $tax,
-            'term' => $term,
-            'post__in' =>  $ids,
-            'post__not_in' => $ac_cls_query_post_id
-        ));
-
-        //if var empty
-        if (empty($ac_cls_query)){
-            //set the static array to query posts
-            ac_cls_query($wp_query->posts);
-        }else{
-
-            //if not empty merge the posts with the pervious posts
-            ac_cls_query(array_merge(ac_cls_query(),$wp_query->posts));
-
-        }
-//
-//        var_dump($ac_cls_query_post_id);
-//        var_dump($wp_query);
+            // Check if there are posts and render accordingly
+            if ($query->have_posts()) {
 
 
-
-
-
-
-        if (have_posts()) :
-            $output .= $wrapperOpen;
-            if($timber === false){
-
-                while (have_posts()):
-                    the_post();
-                    ob_start();
-                    ?>
-                    <?php include("$template"); ?>
-                    <?php
-                    $output .= ob_get_contents();
-                    ob_end_clean();
-                endwhile;
-
-            }else{
-                if(class_exists('Timber')){
-
-                    $context = Timber::get_context();
-                    $context['posts'] = new Timber\PostQuery();
-                    $templates = array( $template);
-                    ob_start();
-                    Timber::render( $templates, $context );
-                    $output .= ob_get_contents();
-                    ob_end_clean();
-                }else{
-                    ob_start();
-                    ?>
-                        <?php echo "<p>The Timber plugin is not active.<br> Activate Timber or set <code>timber='false'</code> in the short code</p>" ?>
-                    <?php
-                    $output .= ob_get_contents();
-                    ob_end_clean();
+                // Use Timber or PHP template rendering
+                if ($timber && class_exists('Timber')) {
+                    $output .= acclsc_render_timber_template($query, $template);
+                } else {
+                    $output .= acclsc_render_php_template($query, $template);
                 }
 
             }
-            $output .= $wrapperClose;
-        endif;
 
-        if (have_posts()) :
+        } else {
+            // If subtax is provided, query the terms and group the results by subtax term
+            $grouped_posts = acclsc_handle_subtax_query($query_args, $subtax, $timber, $template, $wrapper, $class);
 
-        endif;
+            if ($timber && class_exists('Timber')) {
+                $output .= acclsc_render_grouped_timber_template($grouped_posts, $template);
+            } else {
+                $output .= acclsc_render_grouped_php_template($grouped_posts, $template);
+            }
 
-        $wp_query = $temp_q;
+        }
+
+        if ($wrapper == 'true')
+        {
+            $output .= '</div>';
+        }
+
+        if ($show_pagination && $query->max_num_pages > 1) {
+            $paged = (get_query_var('paged')) ? get_query_var('paged') : 1;
+            $output .= '<div class="pagination">';
+            $output .= paginate_links(array(
+                'total' => $query->max_num_pages,
+                'current' => max(1, $paged), // Ensure a valid current page
+                'format' => '?paged=%#%',
+                'mid_size' => 1,
+                'prev_text' => __('« Prev'),
+                'next_text' => __('Next »')
+            ));
+            $output .= '</div>';
+        }
 
         return $output;
-
     }
 
-    add_shortcode('ac_custom_loop', 'ac_wp_custom_loop_short_code');
-
+    add_shortcode('ac_custom_loop', 'acclsc_sc');
 }
