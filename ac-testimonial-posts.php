@@ -29,8 +29,8 @@
 defined('ABSPATH') or die('You do not have the required permissions');
 
 // Define path and URL to the ACF plugin.
-define( 'MY_ACF_PATH', 'inc/acf/' );
-define( 'MY_ACF_URL', plugin_dir_url( __FILE__ ) . 'inc/acf/' );
+//define( 'MY_ACF_PATH', 'inc/acf/' );
+//define( 'MY_ACF_URL', plugin_dir_url( __FILE__ ) . 'inc/acf/' );
 
 // Include the testimonial custom post type.
 require_once(  'lib/cpt.php' );
@@ -42,7 +42,7 @@ require_once(  'lib/cpt.php' );
 require_once(  'lib/acf.php' );
 
 // Customize the url setting to fix incorrect asset URLs.
-add_filter('acf/settings/url', 'my_acf_settings_url');
+//add_filter('acf/settings/url', 'my_acf_settings_url');
 function my_acf_settings_url( $url ) {
    // return MY_ACF_URL;
 }
@@ -54,12 +54,10 @@ function my_acf_settings_show_admin( $show_admin ) {
 }
 
 // Include the testimonial custom fields.
-require_once(  'inc/cls/ac-wp-custom-loop-sc.php' );
+//require_once(  'inc/cls/ac-wp-custom-loop-sc.php' );
 
 
 function ac_testimonails($atts){
-
-
 
     extract(shortcode_atts(array(
         'type' => 'ac-testimonial',
@@ -87,7 +85,7 @@ function ac_testimonails($atts){
     $output .= '<div class="l-ac-testimonials__testimonial-list">';
     $output .= '<ul class="l-ac-testimonial-list__list">';
 
-    $output .= do_shortcode('[ac_custom_loop tax="ac-testimonial_tag" term="'.$term.'" type="ac-testimonial" wrapper="'.$wrapper.'" ids="'.$ids.'" show="'.$show.'" orderby="'.$orderby.'"]');
+    $output .= do_shortcode('[ac_custom_loop tax="ac-testimonial_tag" term="'.$term.'" type="ac-testimonial" template_path="'.$template.'" wrapper="'.$wrapper.'" ids="'.$ids.'" show="'.$show.'" orderby="'.$orderby.'"]');
     //$output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
     $output .= '</ul>';
     $output .= '</div>';
