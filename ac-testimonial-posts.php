@@ -85,7 +85,7 @@ function ac_testimonails($atts){
     $output .= '<div class="l-ac-testimonials__testimonial-list">';
     $output .= '<ul class="l-ac-testimonial-list__list">';
 
-    $output .= do_shortcode('[ac_custom_loop tax="ac-testimonial_tag" term="'.$term.'" type="ac-testimonial" template_path="'.$template.'" wrapper="'.$wrapper.'" ids="'.$ids.'" show="'.$show.'" orderby="'.$orderby.'"]');
+    $output .= do_shortcode('[ac_custom_loop tax="ac-testimonial_tag" term="'.$term.'" type="ac-testimonial" template="loop-template" template_path="'.$template_path.'" wrapper="'.$wrapper.'" ids="'.$ids.'" show="'.$show.'" orderby="'.$orderby.'"]');
     //$output .= do_shortcode('[ac_custom_loop show="'.$show.'" type="'.$type.'" template_path="'.$template.'" wrapper="'.$wrapper.' ids="'.$ids.'" ]');
     $output .= '</ul>';
     $output .= '</div>';
@@ -95,6 +95,32 @@ function ac_testimonails($atts){
 
 add_shortcode('ac_testimonials', 'ac_testimonails');
 
+function actp_enqueue_scripts()
+{
+
+    $handle_js = 'ac_testimonial_script';
+    $list = 'enqueued';
+
+    if (! wp_script_is( $handle_js, $list )) {
+        wp_register_script( $handle_js, plugin_dir_url( __FILE__ ) . 'assets/js/ac_testimonial_script.js', array('jquery'), '20260113123' );
+        wp_enqueue_script( $handle_js );
+    }
+
+}
+
+add_action( 'wp_enqueue_scripts', 'actp_enqueue_scripts' );
+
+function actp_enqueue_styles()
+{
+    $handle = 'ac_testimonial_styles';
+    $list = 'enqueued';
+    if (! wp_script_is( $handle, $list )) {
+        wp_register_style( $handle , plugin_dir_url( __FILE__ ) . 'assets/css/ac_wp_custom_loop_styles.css', array(), '20260113123' );
+        wp_enqueue_style( $handle );
+    }
+}
+
+add_action( 'get_footer', 'actp_enqueue_styles' );
 
 
 

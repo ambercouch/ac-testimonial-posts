@@ -6,9 +6,7 @@
  * Time: 13:46
  */
 
-$handle = 'ac_testimonial_styles';
-$handle_js = 'ac_testimonial_script';
-$list = 'enqueued';
+
 
 $the_content = apply_filters('the_content', get_the_content());
 $testimonial_title = (get_field('testimonial_title') != '') ? get_field('testimonial_title') : get_the_title() ;
@@ -16,6 +14,11 @@ $testimonial_intro = get_field('testimonial_intro');
 $testimonial_body = get_field('testimonial_body');
 $testimonial_cite = get_field('testimonial_citation');
 $tesimonial_id = get_the_ID();
+
+
+$handle = 'ac_testimonial_styles';
+$handle_js = 'ac_testimonial_script';
+$list = 'enqueued';
 
 if (! wp_script_is( $handle_js, $list )) {
     wp_register_script( 'ac_testimonial_script', plugin_dir_url( __FILE__ ) . 'assets/js/ac_testimonial_script.js', array('jquery'), '20200706' );
