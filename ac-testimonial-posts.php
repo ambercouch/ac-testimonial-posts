@@ -61,14 +61,14 @@ function ac_testimonails($atts){
 
     extract(shortcode_atts(array(
         'type' => 'ac-testimonial',
-        'show' => 2,
+        'show' => '-1',
         'template_path' => get_stylesheet_directory() . '/',
         'template' => plugin_dir_path( __file__ ),
         'css' => 'true',
         'wrapper' => 'false',
         'ignore_sticky_posts' => 1,
-        'orderby' => 'rand',
-        'order' => 'ASC',
+        'orderby' => 'date',
+        'order' => 'DESC',
         'class' => 'c-accl-post-list',
         'tax' => 'ac-testimonial_tag',
         'term' => '',
@@ -120,7 +120,7 @@ function actp_enqueue_styles()
     }
 }
 
-add_action( 'get_footer', 'actp_enqueue_styles' );
+add_action( 'wp_enqueue_scripts', 'actp_enqueue_styles' );
 
 
 

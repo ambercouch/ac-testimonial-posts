@@ -465,7 +465,7 @@ if (!function_exists('acclsc_sc')) {
             'wrapper' => 'true',
             'ignore_sticky_posts' => 1,
             'orderby' => '',
-            'order' => 'DESC',
+            'order' => 'ASC',
             'class' => 'c-accl-post-list',
             'tax' => '',
             'term' => '',
